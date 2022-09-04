@@ -3,11 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
-	"github.com/ajackti/simplebank/db/util"
-	"github.com/stretchr/testify/require"
-	_ "github.com/stretchr/testify/require"
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/ajackti/simplebank/db/util"
+	"github.com/stretchr/testify/require"
 )
 
 func createRandomAccount(t *testing.T) Account {
@@ -69,12 +70,13 @@ func TestUpdateAccount(t *testing.T) {
 
 func TestDeleteAccount(t *testing.T) {
 	account1 := createRandomAccount(t)
+	fmt.Println(account1)
 
 	err := testQueries.DeleteAccount(context.Background(), account1.ID)
 	require.NoError(t, err)
 
 	account2, err := testQueries.GetAccount(context.Background(), account1.ID)
-	require.NoError(t, err)
+	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, account2)
 }

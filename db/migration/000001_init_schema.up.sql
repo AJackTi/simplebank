@@ -1,6 +1,6 @@
 CREATE TABLE "accounts"
 (
-    "id"         serial PRIMARY KEY,
+    "id"         bigserial PRIMARY KEY,
     "owner"      varchar     NOT NULL,
     "balance"    bigint      NOT NULL,
     "currency"   varchar     NOT NULL,

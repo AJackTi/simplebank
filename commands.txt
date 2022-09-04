@@ -1,0 +1,14 @@
+Create new migration
+migrate create -ext sql -dir db/migration -seq init_schema
+
+Execute docker container
+docker exec -it postgres12 /bin/sh
+
+Create new database (in docker container)
+createdb --username=root --owner=root simple_bank
+
+Access database
+psql simple_bank
+
+Drop database
+dropdb simple_bank
