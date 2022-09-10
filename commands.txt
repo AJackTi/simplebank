@@ -12,3 +12,5 @@ psql simple_bank
 
 Drop database
 dropdb simple_bank
+
+SERVER_ADDRESS=0.0.0.0:8081 make server
