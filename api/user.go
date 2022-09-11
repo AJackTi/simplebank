@@ -12,7 +12,7 @@ import (
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Password string `json:"password" binding:"required,min=6"`
-	Fullname string `json:"fullname" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 }
 
@@ -40,7 +40,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 	arg := db.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
-		FullName:       req.Fullname,
+		FullName:       req.FullName,
 		Email:          req.Email,
 	}
 
@@ -53,7 +53,6 @@ func (server *Server) createUser(ctx *gin.Context) {
 				return
 			}
 		}
-
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
