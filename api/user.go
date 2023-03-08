@@ -41,7 +41,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 	arg := db.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
-		FullName:       req.Fullname,
+		Fullname:       req.Fullname,
 		Email:          req.Email,
 	}
 
@@ -53,11 +53,13 @@ func (server *Server) createUser(ctx *gin.Context) {
 				return
 			}
 		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	rsp := createUserResponse{
 		Username:          user.Username,
-		Fullname:          user.FullName,
+		Fullname:          user.Fullname,
 		Email:             user.Email,
 		PasswordChangedAt: user.PasswordChangedAt,
 		CreatedAt:         user.CreatedAt,
