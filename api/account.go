@@ -22,7 +22,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	authPayload := ctx.MustGet(authorizationHeaderKey).(*token.Payload)
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 
 	account, err := server.store.CreateAccount(ctx, db.CreateAccountParams{
 		Owner:    authPayload.Username,
@@ -86,7 +86,7 @@ func (server *Server) listAccount(ctx *gin.Context) {
 		return
 	}
 
-	authPayload := ctx.MustGet(authorizationHeaderKey).(*token.Payload)
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 
 	accounts, err := server.store.ListAccounts(ctx, db.ListAccountsParams{
 		Owner:  authPayload.Username,
