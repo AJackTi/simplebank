@@ -16,13 +16,13 @@ import (
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Password string `json:"password" binding:"required,min=6"`
-	Fullname string `json:"fullname" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 }
 
 type userResponse struct {
 	Username          string    `json:"username"`
-	Fullname          string    `json:"fullname"`
+	FullName          string    `json:"full_name"`
 	Email             string    `json:"email"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
@@ -31,7 +31,7 @@ type userResponse struct {
 func newUserResponse(user db.User) userResponse {
 	return userResponse{
 		Username:          user.Username,
-		Fullname:          user.Fullname,
+		FullName:          user.FullName,
 		Email:             user.Email,
 		PasswordChangedAt: user.PasswordChangedAt,
 		CreatedAt:         user.CreatedAt,
@@ -54,7 +54,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 	arg := db.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
-		Fullname:       req.Fullname,
+		FullName:       req.FullName,
 		Email:          req.Email,
 	}
 

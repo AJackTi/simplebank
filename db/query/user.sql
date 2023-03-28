@@ -2,7 +2,7 @@
 INSERT INTO users (
     username,
     hashed_password,
-    fullname,
+    full_name,
     email
 ) VALUES (
     $1, $2, $3, $4
