@@ -96,6 +96,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		}
 
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	err = util.CheckPassword(req.Password, user.HashedPassword)
