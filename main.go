@@ -63,6 +63,7 @@ func runGatewayServer(config *util.Config, store db.Store) {
 		log.Fatal("cannot create server: ", err)
 	}
 
+	// make response to json format
 	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 		MarshalOptions: protojson.MarshalOptions{
 			UseProtoNames: true,
