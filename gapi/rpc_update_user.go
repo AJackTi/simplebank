@@ -15,11 +15,11 @@ import (
 )
 
 func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	authPayload, err :=  server.authorizeUser(ctx)
+	authPayload, err := server.authorizeUser(ctx)
 	if err != nil {
 		return nil, unauthenticatedError(err)
 	}
-	
+
 	violations := validateUpdateUserRequest(req)
 	if violations != nil {
 		return nil, invalidArgumentError(violations)
@@ -30,14 +30,14 @@ func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 	}
 
 	arg := db.UpdateUserParams{
-		Username:       req.GetUsername(),
-		FullName:       sql.NullString{
+		Username: req.GetUsername(),
+		FullName: sql.NullString{
 			String: req.GetFullName(),
-			Valid: req.FullName != nil,
+			Valid:  req.FullName != nil,
 		},
-		Email:          sql.NullString{
+		Email: sql.NullString{
 			String: req.GetEmail(),
-			Valid: req.Email != nil,
+			Valid:  req.Email != nil,
 		},
 	}
 
@@ -49,10 +49,10 @@ func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 
 		arg.HashedPassword = sql.NullString{
 			String: hashedPassword,
-			Valid: true,
+			Valid:  true,
 		}
 		arg.PasswordChangedAt = sql.NullTime{
-			Time: time.Now(),
+			Time:  time.Now(),
 			Valid: true,
 		}
 	}

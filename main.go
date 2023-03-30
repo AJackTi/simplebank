@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// run db migration
-runDBMigration(config.MigrationURL, config.DBSource)
+	runDBMigration(config.MigrationURL, config.DBSource)
 
 	store := db.NewStore(conn)
 	// runGinServer(&config, store)
