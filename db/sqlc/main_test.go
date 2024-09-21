@@ -6,8 +6,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/AJackTi/simplebank/util"
 	_ "github.com/lib/pq"
+
+	"github.com/AJackTi/simplebank/util"
 )
 
 const (

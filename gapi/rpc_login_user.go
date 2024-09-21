@@ -4,14 +4,15 @@ import (
 	"context"
 	"database/sql"
 
-	db "github.com/AJackTi/simplebank/db/sqlc"
-	"github.com/AJackTi/simplebank/pb"
-	"github.com/AJackTi/simplebank/util"
-	"github.com/AJackTi/simplebank/val"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	db "github.com/AJackTi/simplebank/db/sqlc"
+	"github.com/AJackTi/simplebank/pb"
+	"github.com/AJackTi/simplebank/util"
+	"github.com/AJackTi/simplebank/val"
 )
 
 func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {

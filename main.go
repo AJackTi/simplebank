@@ -7,13 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/AJackTi/simplebank/api"
-	db "github.com/AJackTi/simplebank/db/sqlc"
-	_ "github.com/AJackTi/simplebank/doc/statik"
-	"github.com/AJackTi/simplebank/gapi"
-	"github.com/AJackTi/simplebank/pb"
-	"github.com/AJackTi/simplebank/util"
-	"github.com/AJackTi/simplebank/worker"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -26,6 +19,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/AJackTi/simplebank/api"
+	db "github.com/AJackTi/simplebank/db/sqlc"
+	_ "github.com/AJackTi/simplebank/doc/statik"
+	"github.com/AJackTi/simplebank/gapi"
+	"github.com/AJackTi/simplebank/pb"
+	"github.com/AJackTi/simplebank/util"
+	"github.com/AJackTi/simplebank/worker"
 )
 
 func main() {

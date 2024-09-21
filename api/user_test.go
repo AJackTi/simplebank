@@ -10,12 +10,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mockdb "github.com/AJackTi/simplebank/db/mock"
-	db "github.com/AJackTi/simplebank/db/sqlc"
-	"github.com/AJackTi/simplebank/util"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	mockdb "github.com/AJackTi/simplebank/db/mock"
+	db "github.com/AJackTi/simplebank/db/sqlc"
+	"github.com/AJackTi/simplebank/util"
 )
 
 func TestCreateUserAPI(t *testing.T) {

@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	mockdb "github.com/AJackTi/simplebank/db/mock"
-	"github.com/AJackTi/simplebank/token"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	mockdb "github.com/AJackTi/simplebank/db/mock"
 	db "github.com/AJackTi/simplebank/db/sqlc"
+	"github.com/AJackTi/simplebank/token"
 	"github.com/AJackTi/simplebank/util"
-	"github.com/golang/mock/gomock"
 )
 
 func TestGetAccountAPI(t *testing.T) {

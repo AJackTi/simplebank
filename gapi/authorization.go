@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AJackTi/simplebank/token"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/AJackTi/simplebank/token"
 )
 
 const (

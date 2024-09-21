@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"golang.org/x/crypto/chacha20poly1305"
-
 	"github.com/o1egl/paseto"
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 type PasetoMaker struct {

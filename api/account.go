@@ -5,10 +5,11 @@ import (
 	"errors"
 	"net/http"
 
-	db "github.com/AJackTi/simplebank/db/sqlc"
-	"github.com/AJackTi/simplebank/token"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
+
+	db "github.com/AJackTi/simplebank/db/sqlc"
+	"github.com/AJackTi/simplebank/token"
 )
 
 type createAccountRequest struct {

@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/require"
+
 	db "github.com/AJackTi/simplebank/db/sqlc"
 	"github.com/AJackTi/simplebank/token"
 	"github.com/AJackTi/simplebank/util"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/require"
 )
 
 func newTestServer(t *testing.T, store db.Store) *Server {

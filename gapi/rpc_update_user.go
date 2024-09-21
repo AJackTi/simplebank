@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"time"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	db "github.com/AJackTi/simplebank/db/sqlc"
 	"github.com/AJackTi/simplebank/pb"
 	"github.com/AJackTi/simplebank/util"
 	"github.com/AJackTi/simplebank/val"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {

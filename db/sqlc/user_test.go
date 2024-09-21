@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AJackTi/simplebank/util"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AJackTi/simplebank/util"
 )
 
 func createRandomUser(t *testing.T) *User {
@@ -63,7 +64,7 @@ func TestUpdateUserOnlyFullName(t *testing.T) {
 		Username: oldUser.Username,
 		Email: sql.NullString{
 			String: newEmail,
-			Valid: true,
+			Valid:  true,
 		},
 	})
 
@@ -85,7 +86,7 @@ func TestUpdateUserOnlyPassword(t *testing.T) {
 		Username: oldUser.Username,
 		HashedPassword: sql.NullString{
 			String: newHashedPassword,
-			Valid: true,
+			Valid:  true,
 		},
 	})
 
@@ -109,15 +110,15 @@ func TestUpdateUserAllFields(t *testing.T) {
 		Username: oldUser.Username,
 		FullName: sql.NullString{
 			String: newFullName,
-			Valid: true,
+			Valid:  true,
 		},
 		Email: sql.NullString{
 			String: newEmail,
-			Valid: true,
+			Valid:  true,
 		},
 		HashedPassword: sql.NullString{
 			String: newHashedPassword,
-			Valid: true,
+			Valid:  true,
 		},
 	})
 

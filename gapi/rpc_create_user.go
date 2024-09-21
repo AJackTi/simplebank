@@ -4,16 +4,17 @@ import (
 	"context"
 	"time"
 
-	db "github.com/AJackTi/simplebank/db/sqlc"
-	"github.com/AJackTi/simplebank/pb"
-	"github.com/AJackTi/simplebank/util"
-	"github.com/AJackTi/simplebank/val"
-	"github.com/AJackTi/simplebank/worker"
 	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	db "github.com/AJackTi/simplebank/db/sqlc"
+	"github.com/AJackTi/simplebank/pb"
+	"github.com/AJackTi/simplebank/util"
+	"github.com/AJackTi/simplebank/val"
+	"github.com/AJackTi/simplebank/worker"
 )
 
 func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
