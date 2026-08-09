@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const minSecretKeySize = 32
@@ -24,9 +24,9 @@ func NewJWTMaker(secretKey string) (Maker, error) {
 	return &JWTMaker{secretKey}, nil
 }
 
-// CreateToken creates a new token for a specific username and duration
-func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
-	payload, err := NewPayload(username, duration)
+// CreateToken creates a new token for a specific username, type, and duration.
+func (maker *JWTMaker) CreateToken(username string, tokenType TokenType, duration time.Duration) (string, *Payload, error) {
+	payload, err := NewPayload(username, tokenType, duration)
 	if err != nil {
 		return "", payload, err
 	}
@@ -36,20 +36,25 @@ func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (str
 	return token, payload, err
 }
 
-// VerifyToken checks if the token is valid or not
-func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
-	keyFunc := func(token *jwt.Token) (interface{}, error) {
-		_, ok := token.Method.(*jwt.SigningMethodHMAC)
-		if !ok {
+// VerifyToken checks if the token is valid and has the expected type.
+func (maker *JWTMaker) VerifyToken(token string, expectedType TokenType) (*Payload, error) {
+	keyFunc := func(parsedToken *jwt.Token) (interface{}, error) {
+		if parsedToken.Method != jwt.SigningMethodHS256 {
 			return nil, ErrInvalidToken
 		}
 
 		return []byte(maker.secretKey), nil
 	}
-	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFunc)
+	jwtToken, err := jwt.ParseWithClaims(
+		token,
+		&Payload{},
+		keyFunc,
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithIssuer(TokenIssuer),
+		jwt.WithAudience(TokenAudience),
+	)
 	if err != nil {
-		verr, ok := err.(*jwt.ValidationError)
-		if ok && errors.Is(verr.Inner, ErrExpiredToken) {
+		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrExpiredToken
 		}
 		return nil, ErrInvalidToken
@@ -58,6 +63,9 @@ func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
 	payload, ok := jwtToken.Claims.(*Payload)
 	if !ok {
 		return nil, ErrInvalidToken
+	}
+	if err := payload.ValidFor(expectedType); err != nil {
+		return nil, err
 	}
 
 	return payload, nil

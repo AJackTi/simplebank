@@ -1,22 +1,69 @@
-version: "3.9"
+name: simplebank
+
 services:
   postgres:
-    image: postgres:12-alpine
-    ports:
-      - "5432:5432"
+    image: postgres:17-alpine
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=simple_bank
+      POSTGRES_USER: simplebank
+      # The fallback is intentionally development-only. Production deployments
+      # must provide POSTGRES_PASSWORD through their secret manager/environment.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-simplebank_dev}
+      POSTGRES_DB: simple_bank
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simplebank -d simple_bank"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   api:
     build:
       context: .
       dockerfile: Dockerfile
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "8080:8080"
+      - "${HTTP_PORT:-8080}:8080"
+      - "${GRPC_PORT:-9090}:9090"
     environment:
-      - DB_SOURCE=postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DB_DRIVER: postgres
+      DB_SOURCE: postgresql://simplebank:${POSTGRES_PASSWORD:-simplebank_dev}@postgres:5432/simple_bank?sslmode=disable
+      MIGRATION_URL: file://db/migration
+      HTTP_SERVER_ADDRESS: 0.0.0.0:8080
+      GRPC_SERVER_ADDRESS: 0.0.0.0:9090
+      # This is a disposable local-development key. Production must override it
+      # with a 32-character secret from a secret manager/environment.
+      TOKEN_SYMMETRIC_KEY: ${TOKEN_SYMMETRIC_KEY:-0123456789abcdef0123456789abcdef}
+      ACCESS_TOKEN_DURATION: ${ACCESS_TOKEN_DURATION:-15m}
+      REFRESH_TOKEN_DURATION: ${REFRESH_TOKEN_DURATION:-24h}
+      REDIS_ADDRESS: redis:6379
     depends_on:
-      - postgres
-    entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
-    command: ["/app/main"]
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

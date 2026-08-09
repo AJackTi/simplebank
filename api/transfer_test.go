@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/AJackTi/simplebank/db/mock"
 	db "github.com/AJackTi/simplebank/db/sqlc"
@@ -237,6 +238,78 @@ func TestTransferAPI(t *testing.T) {
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "InvalidTransferAmount",
+			body: gin.H{
+				"from_account_id": account1.ID,
+				"to_account_id":   account2.ID,
+				"amount":          amount,
+				"currency":        util.USD,
+			},
+			authUsername: user1.Username,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account1.ID)).Return(account1, nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account2.ID)).Return(account2, nil)
+				store.EXPECT().TransferTx(gomock.Any(), gomock.Any()).Return(nil, db.ErrInvalidTransferAmount)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "SelfTransfer",
+			body: gin.H{
+				"from_account_id": account1.ID,
+				"to_account_id":   account1.ID,
+				"amount":          amount,
+				"currency":        util.USD,
+			},
+			authUsername: user1.Username,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account1.ID)).Return(account1, nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account1.ID)).Return(account1, nil)
+				store.EXPECT().TransferTx(gomock.Any(), gomock.Any()).Return(nil, db.ErrSameAccountTransfer)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "InsufficientFunds",
+			body: gin.H{
+				"from_account_id": account1.ID,
+				"to_account_id":   account2.ID,
+				"amount":          amount,
+				"currency":        util.USD,
+			},
+			authUsername: user1.Username,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account1.ID)).Return(account1, nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account2.ID)).Return(account2, nil)
+				store.EXPECT().TransferTx(gomock.Any(), gomock.Any()).Return(nil, db.ErrInsufficientFunds)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusConflict, recorder.Code)
+			},
+		},
+		{
+			name: "WrappedCurrencyMismatch",
+			body: gin.H{
+				"from_account_id": account1.ID,
+				"to_account_id":   account2.ID,
+				"amount":          amount,
+				"currency":        util.USD,
+			},
+			authUsername: user1.Username,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account1.ID)).Return(account1, nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(account2.ID)).Return(account2, nil)
+				store.EXPECT().TransferTx(gomock.Any(), gomock.Any()).Return(nil, errors.Join(errors.New("validation failed"), db.ErrCurrencyMismatch))
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
 	}

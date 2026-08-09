@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/AJackTi/simplebank/api"
 	db "github.com/AJackTi/simplebank/db/sqlc"
 	_ "github.com/AJackTi/simplebank/doc/statik"
 	"github.com/AJackTi/simplebank/gapi"
@@ -57,7 +56,6 @@ func main() {
 
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
-	// runGinServer(&config, store)
 	go runTaskProcessor(redisOpt, store)
 	go runGatewayServer(&config, store, taskDistributor)
 	runGrpcServer(&config, store, taskDistributor)
@@ -155,17 +153,5 @@ func runGatewayServer(config *util.Config, store db.Store, taskDistributor worke
 	err = http.Serve(listener, handler)
 	if err != nil {
 		log.Fatal().Msgf("cannot start HTTP gateway server: %v", err)
-	}
-}
-
-func runGinServer(config *util.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
-	if err != nil {
-		log.Fatal().Msgf("cannot create server: %v", err)
-	}
-
-	err = server.Start(config.HTTPServerAddress)
-	if err != nil {
-		log.Fatal().Msgf("cannot start server: %v", err)
 	}
 }

@@ -52,11 +52,26 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 
 	result, err := server.store.TransferTx(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(transferErrorStatus(err), errorResponse(err))
 		return
 	}
 
 	ctx.JSON(http.StatusOK, result)
+}
+
+func transferErrorStatus(err error) int {
+	switch {
+	case errors.Is(err, db.ErrInvalidTransferAmount),
+		errors.Is(err, db.ErrSameAccountTransfer),
+		errors.Is(err, db.ErrCurrencyMismatch):
+		return http.StatusBadRequest
+	case errors.Is(err, db.ErrInsufficientFunds):
+		return http.StatusConflict
+	case errors.Is(err, sql.ErrNoRows):
+		return http.StatusNotFound
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {

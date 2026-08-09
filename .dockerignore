@@ -1,0 +1,18 @@
+.git
+.github
+.vscode
+
+# Local environment files and secrets. Keep only the safe template in context.
+.env
+.env.*
+app.env
+app.env.*
+*.env
+*.env.*
+!.env.example
+!app.env.example
+
+*.log
+coverage.out
+coverage.html
+architecture-review-*.html

@@ -12,6 +12,9 @@ import (
 )
 
 func createRandomUser(t *testing.T) *User {
+	t.Helper()
+	requireTestDatabase(t)
+
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
@@ -38,10 +41,12 @@ func createRandomUser(t *testing.T) *User {
 }
 
 func TestCreateUser(t *testing.T) {
+	requireTestDatabase(t)
 	createRandomUser(t)
 }
 
 func TestGetUser(t *testing.T) {
+	requireTestDatabase(t)
 	user1 := createRandomUser(t)
 	user2, err := testQueries.GetUser(context.Background(), user1.Username)
 
@@ -57,6 +62,7 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestUpdateUserOnlyFullName(t *testing.T) {
+	requireTestDatabase(t)
 	oldUser := createRandomUser(t)
 
 	newEmail := util.RandomEmail()
@@ -76,6 +82,7 @@ func TestUpdateUserOnlyFullName(t *testing.T) {
 }
 
 func TestUpdateUserOnlyPassword(t *testing.T) {
+	requireTestDatabase(t)
 	oldUser := createRandomUser(t)
 
 	newPassword := util.RandomString(6)
@@ -98,6 +105,7 @@ func TestUpdateUserOnlyPassword(t *testing.T) {
 }
 
 func TestUpdateUserAllFields(t *testing.T) {
+	requireTestDatabase(t)
 	oldUser := createRandomUser(t)
 
 	newFullName := util.RandomOwner()

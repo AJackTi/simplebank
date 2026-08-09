@@ -1,5 +1,9 @@
 .idea
 
 app.env
+.env
+.env.*
+!.env.example
+!app.env.example
 
 *.log

@@ -37,7 +37,7 @@ func createAndSetAuthToken(t *testing.T, request *http.Request, tokenMaker token
 		return
 	}
 
-	token, payload, err := tokenMaker.CreateToken(username, time.Minute)
+	token, payload, err := tokenMaker.CreateToken(username, token.AccessTokenType, time.Minute)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 

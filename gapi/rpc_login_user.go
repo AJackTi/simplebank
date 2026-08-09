@@ -11,6 +11,7 @@ import (
 
 	db "github.com/AJackTi/simplebank/db/sqlc"
 	"github.com/AJackTi/simplebank/pb"
+	"github.com/AJackTi/simplebank/token"
 	"github.com/AJackTi/simplebank/util"
 	"github.com/AJackTi/simplebank/val"
 )
@@ -36,6 +37,7 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 
 	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
 		user.Username,
+		token.AccessTokenType,
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
@@ -44,6 +46,7 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 
 	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(
 		user.Username,
+		token.RefreshTokenType,
 		server.config.RefreshTokenDuration,
 	)
 	if err != nil {

@@ -1,52 +1,124 @@
-name: ci-test
+name: CI
 
 on:
-  push: 
-    branches: [ master ]
+  push:
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DB_URL: postgresql://simplebank:simplebank_dev@127.0.0.1:5432/simple_bank?sslmode=disable
+  SIMPLEBANK_TEST_DB_DRIVER: postgres
+  SIMPLEBANK_TEST_DB_SOURCE: postgresql://simplebank:simplebank_dev@127.0.0.1:5432/simple_bank?sslmode=disable
+  REDIS_ADDRESS: 127.0.0.1:6379
 
 jobs:
+  quality:
+    name: Quality and security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go from go.mod
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Verify module files
+        run: |
+          go mod verify
+          go mod tidy -diff
+
+      - name: Check formatting
+        run: |
+          mapfile -d '' go_files < <(git ls-files -z '*.go' ':!doc/statik/**')
+          unformatted="$(gofmt -l "${go_files[@]}")"
+          if [[ -n "$unformatted" ]]; then
+            echo "The following Go files need formatting:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@d583c34f0599d37dbac4a198b9c83201be380893 # v9.3.0
+        with:
+          version: v2.12.2
+          args: --timeout=5m
+
+      - name: Check for reachable vulnerabilities
+        uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
+        with:
+          go-version-file: go.mod
+          go-package: ./...
+          repo-checkout: false
 
   test:
-    name: Test
+    name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     services:
       postgres:
-        image: postgres:12
+        image: postgres:17-alpine
         env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: secret
+          POSTGRES_USER: simplebank
+          POSTGRES_PASSWORD: simplebank_dev
           POSTGRES_DB: simple_bank
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
         ports:
-          - 5432:5432
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U simplebank -d simple_bank"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
 
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup up Go 1.x
-        uses: actions/setup-go@v2
+      - name: Set up Go from go.mod
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ^1.20.2
-        id: go
-      
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-      
-      - name: Install golang-migrate
-        run: |
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz | tar xvz
-          sudo mv migrate /usr/bin/migrate
-          which migrate
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
 
-      - name: Run migrations
+      - name: Install migration CLI
+        env:
+          GOBIN: ${{ runner.temp }}/bin
+        run: |
+          mkdir -p "$GOBIN"
+          go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.1
+          echo "$GOBIN" >> "$GITHUB_PATH"
+
+      - name: Run database migrations
         run: make migrateup
 
-      - name: Test
-        run: make test
+      - name: Run tests
+        run: go test -count=1 -cover ./...
+
+      - name: Run race detector
+        run: go test -race -count=1 ./...

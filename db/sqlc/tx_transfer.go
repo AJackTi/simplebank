@@ -2,7 +2,15 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
+)
+
+var (
+	ErrInvalidTransferAmount = errors.New("transfer amount must be positive")
+	ErrSameAccountTransfer   = errors.New("source and destination accounts must differ")
+	ErrInsufficientFunds     = errors.New("insufficient funds")
+	ErrCurrencyMismatch      = errors.New("account currencies do not match")
 )
 
 // TransferTxParams contains the input parameters of the transfer transaction
@@ -21,29 +29,37 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-var txKey = struct{}{}
-
 // TransferTx performs a money transfer from one account to the other
 // It creates a transfer record, add account entries, and update accounts' balance within a single database transaction
 func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (*TransferTxResult, error) {
+	if arg.Amount <= 0 {
+		return nil, ErrInvalidTransferAmount
+	}
+	if arg.FromAccountID == arg.ToAccountID {
+		return nil, ErrSameAccountTransfer
+	}
+
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		txName := ctx.Value(txKey)
+		fromAccount, toAccount, err := lockTransferAccounts(ctx, q, arg.FromAccountID, arg.ToAccountID)
+		if err != nil {
+			return err
+		}
+		if fromAccount.Currency != toAccount.Currency {
+			return fmt.Errorf("%w: source uses %s and destination uses %s", ErrCurrencyMismatch, fromAccount.Currency, toAccount.Currency)
+		}
+		if fromAccount.Balance < arg.Amount {
+			return fmt.Errorf("%w: account %d has balance %d, needs %d", ErrInsufficientFunds, fromAccount.ID, fromAccount.Balance, arg.Amount)
+		}
 
-		fmt.Println(txName, "create transfer")
-		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
-			FromAccountID: arg.FromAccountID,
-			ToAccountID:   arg.ToAccountID,
-			Amount:        arg.Amount,
-		})
+		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams(arg))
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(txName, "create entry 1")
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
@@ -52,7 +68,6 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (*T
 			return err
 		}
 
-		fmt.Println(txName, "create entry 2")
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
@@ -65,13 +80,48 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (*T
 		if arg.FromAccountID < arg.ToAccountID {
 			result.FromAccount, result.ToAccount, err = addMoney(ctx, q, arg.FromAccountID, -arg.Amount, arg.ToAccountID, arg.Amount)
 		} else {
-			result.FromAccount, result.ToAccount, err = addMoney(ctx, q, arg.ToAccountID, arg.Amount, arg.FromAccountID, -arg.Amount)
+			result.ToAccount, result.FromAccount, err = addMoney(ctx, q, arg.ToAccountID, arg.Amount, arg.FromAccountID, -arg.Amount)
+		}
+		if err != nil {
+			return fmt.Errorf("update account balances: %w", err)
 		}
 
 		return nil
 	})
 
-	return &result, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func lockTransferAccounts(
+	ctx context.Context,
+	q *Queries,
+	fromAccountID int64,
+	toAccountID int64,
+) (fromAccount Account, toAccount Account, err error) {
+	firstAccountID := fromAccountID
+	secondAccountID := toAccountID
+	if firstAccountID > secondAccountID {
+		firstAccountID, secondAccountID = secondAccountID, firstAccountID
+	}
+
+	firstAccount, err := q.GetAccountForUpdate(ctx, firstAccountID)
+	if err != nil {
+		return Account{}, Account{}, fmt.Errorf("lock account %d: %w", firstAccountID, err)
+	}
+	secondAccount, err := q.GetAccountForUpdate(ctx, secondAccountID)
+	if err != nil {
+		return Account{}, Account{}, fmt.Errorf("lock account %d: %w", secondAccountID, err)
+	}
+
+	if fromAccountID == firstAccountID {
+		return firstAccount, secondAccount, nil
+	}
+
+	return secondAccount, firstAccount, nil
 }
 
 func addMoney(

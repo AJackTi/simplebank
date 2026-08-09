@@ -35,10 +35,12 @@ func createRandomAccount(t *testing.T) *Account {
 }
 
 func TestCreateAccount(t *testing.T) {
+	requireTestDatabase(t)
 	createRandomAccount(t)
 }
 
 func TestGetAccount(t *testing.T) {
+	requireTestDatabase(t)
 	account1 := createRandomAccount(t)
 	account2, err := testQueries.GetAccount(context.Background(), account1.ID)
 
@@ -53,6 +55,7 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
+	requireTestDatabase(t)
 	account1 := createRandomAccount(t)
 
 	arg := UpdateAccountParams{
@@ -72,6 +75,7 @@ func TestUpdateAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
+	requireTestDatabase(t)
 	account1 := createRandomAccount(t)
 	err := testQueries.DeleteAccount(context.Background(), account1.ID)
 	require.NoError(t, err)
@@ -83,6 +87,7 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestListAccount(t *testing.T) {
+	requireTestDatabase(t)
 	var lastAccount *Account
 	for i := 0; i < 10; i++ {
 		lastAccount = createRandomAccount(t)

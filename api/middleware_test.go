@@ -21,11 +21,31 @@ func addAuthorization(
 	username string,
 	duration time.Duration,
 ) {
-	token, payload, err := tokenMaker.CreateToken(username, duration)
+	addAuthorizationWithTokenType(
+		t,
+		request,
+		tokenMaker,
+		authorizationType,
+		username,
+		token.AccessTokenType,
+		duration,
+	)
+}
+
+func addAuthorizationWithTokenType(
+	t *testing.T,
+	request *http.Request,
+	tokenMaker token.Maker,
+	authorizationType string,
+	username string,
+	tokenType token.TokenType,
+	duration time.Duration,
+) {
+	tokenValue, payload, err := tokenMaker.CreateToken(username, tokenType, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 
-	authorizationHeader := fmt.Sprintf("%s %s", authorizationType, token)
+	authorizationHeader := fmt.Sprintf("%s %s", authorizationType, tokenValue)
 	request.Header.Set(authorizationHeaderKey, authorizationHeader)
 }
 
@@ -74,6 +94,46 @@ func TestAuthMiddleware(t *testing.T) {
 			name: "ExpiredToken",
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "user", -time.Minute)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+		{
+			name: "RefreshToken",
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorizationWithTokenType(
+					t,
+					request,
+					tokenMaker,
+					authorizationTypeBearer,
+					"user",
+					token.RefreshTokenType,
+					time.Minute,
+				)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+		{
+			name: "ExtraAuthorizationField",
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				accessToken, _, err := tokenMaker.CreateToken("user", token.AccessTokenType, time.Minute)
+				require.NoError(t, err)
+				request.Header.Set(authorizationHeaderKey, fmt.Sprintf("bearer %s extra", accessToken))
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+		{
+			name: "MultipleAuthorizationHeaders",
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				accessToken, _, err := tokenMaker.CreateToken("user", token.AccessTokenType, time.Minute)
+				require.NoError(t, err)
+				request.Header.Add(authorizationHeaderKey, fmt.Sprintf("bearer %s", accessToken))
+				request.Header.Add(authorizationHeaderKey, fmt.Sprintf("bearer %s", accessToken))
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)

@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/AJackTi/simplebank/db/mock"
 	db "github.com/AJackTi/simplebank/db/sqlc"
@@ -160,15 +159,11 @@ func randomUser(t *testing.T) (user db.User, password string) {
 }
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	require.NoError(t, err)
 
 	var gotUser db.User
 	err = json.Unmarshal(data, &gotUser)
-
-	fmt.Println("11111")
-	fmt.Println(gotUser)
-	fmt.Println("11111")
 
 	require.NoError(t, err)
 	require.Equal(t, user.Username, gotUser.Username)

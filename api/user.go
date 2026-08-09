@@ -11,6 +11,7 @@ import (
 	"github.com/lib/pq"
 
 	db "github.com/AJackTi/simplebank/db/sqlc"
+	"github.com/AJackTi/simplebank/token"
 	"github.com/AJackTi/simplebank/util"
 )
 
@@ -114,6 +115,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
 		user.Username,
+		token.AccessTokenType,
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
@@ -123,6 +125,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(
 		user.Username,
+		token.RefreshTokenType,
 		server.config.RefreshTokenDuration,
 	)
 	if err != nil {

@@ -25,11 +25,14 @@ func (server *Server) authorizeUser(ctx context.Context) (*token.Payload, error)
 	if len(values) == 0 {
 		return nil, fmt.Errorf("missing authorization header")
 	}
+	if len(values) != 1 {
+		return nil, fmt.Errorf("multiple authorization headers are not allowed")
+	}
 
 	// Bearer abc
 	authHeader := values[0]
 	fields := strings.Fields(authHeader)
-	if len(fields) < 2 {
+	if len(fields) != 2 {
 		return nil, fmt.Errorf("invalid authorization header format")
 	}
 
@@ -39,9 +42,9 @@ func (server *Server) authorizeUser(ctx context.Context) (*token.Payload, error)
 	}
 
 	accessToken := fields[1]
-	payload, err := server.tokenMaker.VerifyToken(accessToken)
+	payload, err := server.tokenMaker.VerifyToken(accessToken, token.AccessTokenType)
 	if err != nil {
-		return nil, fmt.Errorf("invalid access token: %s", err)
+		return nil, fmt.Errorf("invalid access token: %w", err)
 	}
 
 	return payload, nil
