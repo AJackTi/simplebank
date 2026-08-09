@@ -32,6 +32,12 @@ services:
       timeout: 3s
       retries: 20
 
+  mailpit:
+    image: axllent/mailpit:v1.30.7
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_HTTP_PORT:-8025}:8025"
+
   api:
     build:
       context: .
@@ -52,6 +58,11 @@ services:
       MIGRATION_URL: file://db/migration
       HTTP_SERVER_ADDRESS: 0.0.0.0:8080
       GRPC_SERVER_ADDRESS: 0.0.0.0:9090
+      SMTP_SERVER_ADDRESS: mailpit:1025
+      EMAIL_SENDER_NAME: SimpleBank
+      EMAIL_SENDER_ADDRESS: noreply@simplebank.dev
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       # This is a disposable local-development key. Production must override it
       # with a 32-character secret from a secret manager/environment.
       TOKEN_SYMMETRIC_KEY: ${TOKEN_SYMMETRIC_KEY:-local-dev-secret-change-me-00000}
@@ -63,6 +74,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
 volumes:
   postgres_data:

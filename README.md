@@ -8,6 +8,7 @@ It supports user creation and login, account management, money transfers, token 
 - HTTP + gRPC API surface from one proto contract
 - PostgreSQL-backed transactions for accounts, transfers, sessions, and users
 - Transactional outbox for reliable async work
+- SMTP email delivery for verify-email notifications
 - Access + refresh token auth with purpose-aware validation
 - Swagger/OpenAPI docs under `/swagger/`
 - GitHub Actions CI for vet, lint, tests, race, vuln scan, secret scan, and Docker build
@@ -25,6 +26,7 @@ flowchart LR
   API --> Outbox[(Transactional outbox)]
   Outbox --> Worker[Worker]
   Worker --> Postgres
+  Worker --> SMTP[(SMTP / Mailpit)]
 ```
 
 ## Quick start
@@ -46,6 +48,7 @@ flowchart LR
    - HTTP gateway: `http://localhost:8080`
    - gRPC: `localhost:9090`
    - Swagger UI: `http://localhost:8080/swagger/`
+   - Mailpit inbox: `http://localhost:8025`
 
 The app container runs migrations on startup. If you run the app natively with `go run .`, keep `app.env` in the repo root and make sure PostgreSQL and Redis are available.
 
@@ -73,6 +76,10 @@ Important values:
 - `DB_SOURCE`
 - `MIGRATION_URL`
 - `REDIS_ADDRESS`
+- `SMTP_SERVER_ADDRESS`
+- `EMAIL_SENDER_NAME`
+- `EMAIL_SENDER_ADDRESS`
+- `SMTP_USERNAME` / `SMTP_PASSWORD` (optional, for authenticated SMTP)
 - `HTTP_SERVER_ADDRESS`
 - `GRPC_SERVER_ADDRESS`
 - `TOKEN_SYMMETRIC_KEY` (must be exactly 32 characters)

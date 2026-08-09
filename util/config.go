@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
+	stdmail "net/mail"
 	"strings"
 	"time"
 
@@ -17,6 +18,11 @@ type Config struct {
 	DBSource             string        `mapstructure:"DB_SOURCE"`
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
 	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
+	SMTPServerAddress    string        `mapstructure:"SMTP_SERVER_ADDRESS"`
+	EmailSenderName      string        `mapstructure:"EMAIL_SENDER_NAME"`
+	EmailSenderAddress   string        `mapstructure:"EMAIL_SENDER_ADDRESS"`
+	SMTPUsername         string        `mapstructure:"SMTP_USERNAME"`
+	SMTPPassword         string        `mapstructure:"SMTP_PASSWORD"`
 	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
@@ -31,13 +37,16 @@ const developmentTokenSymmetricKey = "local-dev-secret-change-me-00000"
 // Validate checks the values required to start the application safely.
 func (config Config) Validate() error {
 	for name, value := range map[string]string{
-		"ENVIRONMENT":         config.Environment,
-		"DB_DRIVER":           config.DBDriver,
-		"DB_SOURCE":           config.DBSource,
-		"MIGRATION_URL":       config.MigrationURL,
-		"REDIS_ADDRESS":       config.RedisAddress,
-		"HTTP_SERVER_ADDRESS": config.HTTPServerAddress,
-		"GRPC_SERVER_ADDRESS": config.GRPCServerAddress,
+		"ENVIRONMENT":          config.Environment,
+		"DB_DRIVER":            config.DBDriver,
+		"DB_SOURCE":            config.DBSource,
+		"MIGRATION_URL":        config.MigrationURL,
+		"REDIS_ADDRESS":        config.RedisAddress,
+		"SMTP_SERVER_ADDRESS":  config.SMTPServerAddress,
+		"EMAIL_SENDER_NAME":    config.EmailSenderName,
+		"EMAIL_SENDER_ADDRESS": config.EmailSenderAddress,
+		"HTTP_SERVER_ADDRESS":  config.HTTPServerAddress,
+		"GRPC_SERVER_ADDRESS":  config.GRPCServerAddress,
 	} {
 		if strings.TrimSpace(value) == "" {
 			return fmt.Errorf("%w: %s is required", ErrInvalidConfig, name)
@@ -46,6 +55,14 @@ func (config Config) Validate() error {
 
 	if len(config.TokenSymmetricKey) != 32 {
 		return fmt.Errorf("%w: TOKEN_SYMMETRIC_KEY must be exactly 32 characters", ErrInvalidConfig)
+	}
+	if _, err := stdmail.ParseAddress(config.EmailSenderAddress); err != nil {
+		return fmt.Errorf("%w: EMAIL_SENDER_ADDRESS must be a valid email address: %v", ErrInvalidConfig, err)
+	}
+	hasSMTPUsername := strings.TrimSpace(config.SMTPUsername) != ""
+	hasSMTPPassword := strings.TrimSpace(config.SMTPPassword) != ""
+	if hasSMTPUsername != hasSMTPPassword {
+		return fmt.Errorf("%w: SMTP_USERNAME and SMTP_PASSWORD must be set together", ErrInvalidConfig)
 	}
 	if !isDevelopmentEnvironment(config.Environment) && config.TokenSymmetricKey == developmentTokenSymmetricKey {
 		return fmt.Errorf("%w: the development TOKEN_SYMMETRIC_KEY cannot be used in %s", ErrInvalidConfig, config.Environment)
@@ -84,6 +101,11 @@ func LoadConfig(path string) (config Config, err error) {
 		"DB_SOURCE",
 		"MIGRATION_URL",
 		"REDIS_ADDRESS",
+		"SMTP_SERVER_ADDRESS",
+		"EMAIL_SENDER_NAME",
+		"EMAIL_SENDER_ADDRESS",
+		"SMTP_USERNAME",
+		"SMTP_PASSWORD",
 		"HTTP_SERVER_ADDRESS",
 		"GRPC_SERVER_ADDRESS",
 		"TOKEN_SYMMETRIC_KEY",

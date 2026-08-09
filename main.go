@@ -23,6 +23,7 @@ import (
 	db "github.com/AJackTi/simplebank/db/sqlc"
 	_ "github.com/AJackTi/simplebank/doc/statik"
 	"github.com/AJackTi/simplebank/gapi"
+	mailservice "github.com/AJackTi/simplebank/mail"
 	"github.com/AJackTi/simplebank/pb"
 	"github.com/AJackTi/simplebank/util"
 	"github.com/AJackTi/simplebank/worker"
@@ -54,9 +55,20 @@ func main() {
 		Addr: config.RedisAddress,
 	}
 
+	emailSender, err := mailservice.NewSMTPSender(
+		config.SMTPServerAddress,
+		config.EmailSenderName,
+		config.EmailSenderAddress,
+		config.SMTPUsername,
+		config.SMTPPassword,
+	)
+	if err != nil {
+		log.Fatal().Msgf("cannot create email sender: %v", err)
+	}
+
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(redisOpt, store, emailSender)
 	go runOutboxDispatcher(store, taskDistributor)
 	go runGatewayServer(&config, store)
 	runGrpcServer(&config, store)
@@ -75,8 +87,8 @@ func runDBMigration(migrationURL string, dbSource string) {
 	log.Info().Msg("db migrated successfully")
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store, emailSender mailservice.EmailSender) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, emailSender)
 	log.Info().Msg("start task processor")
 	err := taskProcessor.Start()
 	if err != nil {

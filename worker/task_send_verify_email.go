@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ import (
 )
 
 const TaskSendVerifyEmail = "task:send_verify_email"
+const verifyEmailSubject = "Verify your SimpleBank account"
 
 type PayloadSendVerifyEmail struct {
 	Username string `json:"username"`
@@ -75,11 +77,32 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// TODO: send email to user
+	if processor.emailSender == nil {
+		return fmt.Errorf("email sender is not configured")
+	}
+
+	content := buildVerifyEmailContent(user)
+	if err := processor.emailSender.SendEmail(ctx, []string{user.Email}, verifyEmailSubject, content); err != nil {
+		return fmt.Errorf("failed to send verify email: %w", err)
+	}
+
 	log.Info().
 		Str("type", task.Type()).
 		Bytes("payload", task.Payload()).
 		Str("mail", user.Email).
 		Msg("processed task")
 	return nil
+}
+
+func buildVerifyEmailContent(user db.User) string {
+	name := strings.TrimSpace(user.FullName)
+	if name == "" {
+		name = user.Username
+	}
+
+	return fmt.Sprintf(
+		"Hi %s,\n\nYour SimpleBank account for username %q is ready.\nIf you did not request this account, you can ignore this email.\n\n-- SimpleBank\n",
+		name,
+		user.Username,
+	)
 }
