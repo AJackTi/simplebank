@@ -57,7 +57,9 @@ The app container runs migrations on startup. If you run the app natively with `
 | `make test` | Run the full test suite |
 | `make test-race` | Run tests with the race detector |
 | `make check` | Run vet, lint, tests, and vuln checks |
-| `make ci` | Run `make check` plus the race detector |
+| `make gitleaks` | Scan the repository history for secrets |
+| `make docker-build` | Build the release container image locally |
+| `make ci` | Run the local CI bundle |
 | `make proto` | Regenerate protobuf, gRPC gateway, and Swagger artifacts |
 | `make sqlc` | Regenerate SQLC queries and models |
 | `make mock` | Regenerate GoMock store stubs |

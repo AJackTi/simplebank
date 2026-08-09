@@ -4,10 +4,11 @@ POSTGRES_DB ?= simple_bank
 POSTGRES_PORT ?= 5432
 REDIS_PORT ?= 6379
 DB_URL ?= postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable
+GITLEAKS_IMAGE ?= zricethezav/gitleaks:v8.30.1
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down logs migrateup migratedown migrateup1 migratedown1 db_docs db_schema sqlc test test-race vet lint security check ci server mock proto evans
+.PHONY: help up down logs migrateup migratedown migrateup1 migratedown1 db_docs db_schema sqlc test test-race vet lint security gitleaks docker-build check ci server mock proto evans
 
 help:
 	@printf '%s\n' \
@@ -15,6 +16,8 @@ help:
 		'down            Stop the local Compose stack and remove volumes' \
 		'test            Run the complete test suite' \
 		'test-race       Run tests with the race detector' \
+		'gitleaks        Scan the repository history for secrets' \
+		'docker-build    Build the release container image' \
 		'check           Run vet, lint, tests, and security checks' \
 		'proto           Regenerate protobuf and OpenAPI artifacts'
 
@@ -63,9 +66,15 @@ lint:
 security:
 	govulncheck -show verbose ./...
 
+gitleaks:
+	docker run --rm -v "$(CURDIR):/path" $(GITLEAKS_IMAGE) detect --source /path --no-banner --redact
+
+docker-build:
+	docker build --pull -t simplebank:local .
+
 check: vet lint test security
 
-ci: check test-race
+ci: check test-race gitleaks docker-build
 
 server:
 	go run .
