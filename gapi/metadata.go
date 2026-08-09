@@ -2,6 +2,7 @@ package gapi
 
 import (
 	"context"
+	"strings"
 
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -21,19 +22,25 @@ func (server *Server) extractMetadata(ctx context.Context) *Metadata {
 	mtdt := &Metadata{}
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		// log.Printf("md: %+v\n", md)
 		if userAgents := md.Get(grpcGatewayUserAgentHeader); len(userAgents) > 0 {
 			mtdt.UserAgent = userAgents[0]
 		}
 
 		if clientIPs := md.Get(xForwardedForHeader); len(clientIPs) > 0 {
-			mtdt.ClientIP = clientIPs[0]
+			mtdt.ClientIP = firstForwardedClientIP(clientIPs[0])
 		}
 	}
 
-	if p, ok := peer.FromContext(ctx); ok {
-		mtdt.ClientIP = p.Addr.String()
+	if mtdt.ClientIP == "" {
+		if p, ok := peer.FromContext(ctx); ok {
+			mtdt.ClientIP = p.Addr.String()
+		}
 	}
 
 	return mtdt
+}
+
+func firstForwardedClientIP(header string) string {
+	clientIP, _, _ := strings.Cut(header, ",")
+	return strings.TrimSpace(clientIP)
 }
