@@ -87,6 +87,21 @@ func (mr *MockStoreMockRecorder) CreateEntry(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEntry", reflect.TypeOf((*MockStore)(nil).CreateEntry), ctx, arg)
 }
 
+// CreateOutboxTask mocks base method.
+func (m *MockStore) CreateOutboxTask(ctx context.Context, arg db.CreateOutboxTaskParams) (db.OutboxTask, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOutboxTask", ctx, arg)
+	ret0, _ := ret[0].(db.OutboxTask)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOutboxTask indicates an expected call of CreateOutboxTask.
+func (mr *MockStoreMockRecorder) CreateOutboxTask(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOutboxTask", reflect.TypeOf((*MockStore)(nil).CreateOutboxTask), ctx, arg)
+}
+
 // CreateSession mocks base method.
 func (m *MockStore) CreateSession(ctx context.Context, arg db.CreateSessionParams) (db.Session, error) {
 	m.ctrl.T.Helper()
@@ -206,6 +221,21 @@ func (mr *MockStoreMockRecorder) GetEntry(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntry", reflect.TypeOf((*MockStore)(nil).GetEntry), ctx, id)
 }
 
+// GetOutboxTask mocks base method.
+func (m *MockStore) GetOutboxTask(ctx context.Context, id uuid.UUID) (db.OutboxTask, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOutboxTask", ctx, id)
+	ret0, _ := ret[0].(db.OutboxTask)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOutboxTask indicates an expected call of GetOutboxTask.
+func (mr *MockStoreMockRecorder) GetOutboxTask(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOutboxTask", reflect.TypeOf((*MockStore)(nil).GetOutboxTask), ctx, id)
+}
+
 // GetSession mocks base method.
 func (m *MockStore) GetSession(ctx context.Context, id uuid.UUID) (db.Session, error) {
 	m.ctrl.T.Helper()
@@ -281,6 +311,21 @@ func (mr *MockStoreMockRecorder) ListEntries(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntries", reflect.TypeOf((*MockStore)(nil).ListEntries), ctx, arg)
 }
 
+// ListPendingOutboxTasks mocks base method.
+func (m *MockStore) ListPendingOutboxTasks(ctx context.Context, limit int32) ([]db.OutboxTask, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPendingOutboxTasks", ctx, limit)
+	ret0, _ := ret[0].([]db.OutboxTask)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPendingOutboxTasks indicates an expected call of ListPendingOutboxTasks.
+func (mr *MockStoreMockRecorder) ListPendingOutboxTasks(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPendingOutboxTasks", reflect.TypeOf((*MockStore)(nil).ListPendingOutboxTasks), ctx, limit)
+}
+
 // ListTransfers mocks base method.
 func (m *MockStore) ListTransfers(ctx context.Context, arg db.ListTransfersParams) ([]db.Transfer, error) {
 	m.ctrl.T.Helper()
@@ -294,6 +339,36 @@ func (m *MockStore) ListTransfers(ctx context.Context, arg db.ListTransfersParam
 func (mr *MockStoreMockRecorder) ListTransfers(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransfers", reflect.TypeOf((*MockStore)(nil).ListTransfers), ctx, arg)
+}
+
+// MarkOutboxTaskDispatched mocks base method.
+func (m *MockStore) MarkOutboxTaskDispatched(ctx context.Context, id uuid.UUID) (db.OutboxTask, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkOutboxTaskDispatched", ctx, id)
+	ret0, _ := ret[0].(db.OutboxTask)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkOutboxTaskDispatched indicates an expected call of MarkOutboxTaskDispatched.
+func (mr *MockStoreMockRecorder) MarkOutboxTaskDispatched(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOutboxTaskDispatched", reflect.TypeOf((*MockStore)(nil).MarkOutboxTaskDispatched), ctx, id)
+}
+
+// MarkOutboxTaskFailed mocks base method.
+func (m *MockStore) MarkOutboxTaskFailed(ctx context.Context, arg db.MarkOutboxTaskFailedParams) (db.OutboxTask, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkOutboxTaskFailed", ctx, arg)
+	ret0, _ := ret[0].(db.OutboxTask)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkOutboxTaskFailed indicates an expected call of MarkOutboxTaskFailed.
+func (mr *MockStoreMockRecorder) MarkOutboxTaskFailed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOutboxTaskFailed", reflect.TypeOf((*MockStore)(nil).MarkOutboxTaskFailed), ctx, arg)
 }
 
 // TransferTx mocks base method.

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/mail"
 	"regexp"
+
+	"github.com/AJackTi/simplebank/util"
 )
 
 var (
@@ -49,6 +51,41 @@ func ValidateEmail(value string) error {
 	}
 	if _, err := mail.ParseAddress(value); err != nil {
 		return fmt.Errorf("is not a valid email address")
+	}
+	return nil
+}
+
+func ValidateAccountID(value int64) error {
+	if value < 1 {
+		return fmt.Errorf("must be at least 1")
+	}
+	return nil
+}
+
+func ValidateTransferAmount(value int64) error {
+	if value <= 0 {
+		return fmt.Errorf("must be greater than 0")
+	}
+	return nil
+}
+
+func ValidateCurrency(value string) error {
+	if !util.IsSupportedCurrency(value) {
+		return fmt.Errorf("unsupported currency")
+	}
+	return nil
+}
+
+func ValidatePageID(value int32) error {
+	if value < 1 {
+		return fmt.Errorf("must be at least 1")
+	}
+	return nil
+}
+
+func ValidatePageSize(value int32) error {
+	if value < 5 || value > 10 {
+		return fmt.Errorf("must be between 5 and 10")
 	}
 	return nil
 }

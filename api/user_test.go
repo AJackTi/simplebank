@@ -2,12 +2,14 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -16,6 +18,7 @@ import (
 	mockdb "github.com/AJackTi/simplebank/db/mock"
 	db "github.com/AJackTi/simplebank/db/sqlc"
 	"github.com/AJackTi/simplebank/util"
+	"github.com/AJackTi/simplebank/worker"
 )
 
 func TestCreateUserAPI(t *testing.T) {
@@ -37,9 +40,27 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(user, nil)
+					CreateUserTx(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(ctx context.Context, arg db.CreateUserTxParams) (*db.CreateUserTxResult, error) {
+						require.Equal(t, user.Username, arg.Username)
+						require.Equal(t, user.FullName, arg.FullName)
+						require.Equal(t, user.Email, arg.Email)
+						require.NotEmpty(t, arg.HashedPassword)
+						require.Len(t, arg.OutboxTasks, 1)
+
+						task := arg.OutboxTasks[0]
+						require.Equal(t, worker.TaskSendVerifyEmail, task.TaskType)
+						require.Equal(t, worker.QueueCritical, task.Queue)
+						require.Equal(t, int32(10), task.MaxRetry)
+						require.NotZero(t, task.ID)
+						require.True(t, task.ProcessAt.After(time.Now().Add(5*time.Second)))
+
+						var payload worker.PayloadSendVerifyEmail
+						require.NoError(t, json.Unmarshal([]byte(task.Payload), &payload))
+						require.Equal(t, user.Username, payload.Username)
+
+						return &db.CreateUserTxResult{User: user}, nil
+					})
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -56,9 +77,8 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(db.User{}, sql.ErrConnDone)
+					CreateUserTx(gomock.Any(), gomock.Any()).
+					Return(nil, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
@@ -74,7 +94,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
+					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -91,7 +111,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
+					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
@@ -108,7 +128,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					CreateUser(gomock.Any(), gomock.Any()).
+					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {

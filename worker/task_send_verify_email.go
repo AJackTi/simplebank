@@ -5,15 +5,35 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
+
+	db "github.com/AJackTi/simplebank/db/sqlc"
 )
 
 const TaskSendVerifyEmail = "task:send_verify_email"
 
 type PayloadSendVerifyEmail struct {
 	Username string `json:"username"`
+}
+
+func NewSendVerifyEmailOutboxTask(username string) (db.CreateOutboxTaskParams, error) {
+	payload, err := json.Marshal(PayloadSendVerifyEmail{Username: username})
+	if err != nil {
+		return db.CreateOutboxTaskParams{}, fmt.Errorf("failed to marshal outbox payload: %w", err)
+	}
+
+	return db.CreateOutboxTaskParams{
+		ID:        uuid.New(),
+		TaskType:  TaskSendVerifyEmail,
+		Queue:     QueueCritical,
+		Payload:   string(payload),
+		MaxRetry:  10,
+		ProcessAt: time.Now().Add(10 * time.Second),
+	}, nil
 }
 
 func (distributor *RedisTaskDistributor) DistributeTaskSendVerifyEmail(

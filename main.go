@@ -57,8 +57,9 @@ func main() {
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	go runTaskProcessor(redisOpt, store)
-	go runGatewayServer(&config, store, taskDistributor)
-	runGrpcServer(&config, store, taskDistributor)
+	go runOutboxDispatcher(store, taskDistributor)
+	go runGatewayServer(&config, store)
+	runGrpcServer(&config, store)
 }
 
 func runDBMigration(migrationURL string, dbSource string) {
@@ -83,8 +84,14 @@ func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
 	}
 }
 
-func runGrpcServer(config *util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
-	server, err := gapi.NewServer(config, store, taskDistributor)
+func runOutboxDispatcher(store db.Store, taskDistributor worker.TaskDistributor) {
+	outboxDispatcher := worker.NewRedisOutboxDispatcher(store, taskDistributor)
+	log.Info().Msg("start outbox dispatcher")
+	outboxDispatcher.Start(context.Background())
+}
+
+func runGrpcServer(config *util.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
 	if err != nil {
 		log.Fatal().Msgf("cannot create server: %v", err)
 	}
@@ -106,8 +113,8 @@ func runGrpcServer(config *util.Config, store db.Store, taskDistributor worker.T
 	}
 }
 
-func runGatewayServer(config *util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
-	server, err := gapi.NewServer(config, store, taskDistributor)
+func runGatewayServer(config *util.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
 	if err != nil {
 		log.Fatal().Msgf("cannot create server: %v", err)
 	}

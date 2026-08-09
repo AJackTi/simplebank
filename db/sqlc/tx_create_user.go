@@ -7,7 +7,7 @@ import (
 // CreateUserTxParams contains the input parameters of the create user transaction
 type CreateUserTxParams struct {
 	CreateUserParams
-	AfterCreate func(user User) error
+	OutboxTasks []CreateOutboxTaskParams
 }
 
 // CreateUserTxResult is the result of the create user transaction
@@ -27,7 +27,13 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 			return err
 		}
 
-		return arg.AfterCreate(result.User)
+		for _, task := range arg.OutboxTasks {
+			if _, err := q.CreateOutboxTask(ctx, task); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 
 	return &result, err

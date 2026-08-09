@@ -54,7 +54,7 @@ services:
       GRPC_SERVER_ADDRESS: 0.0.0.0:9090
       # This is a disposable local-development key. Production must override it
       # with a 32-character secret from a secret manager/environment.
-      TOKEN_SYMMETRIC_KEY: ${TOKEN_SYMMETRIC_KEY:-0123456789abcdef0123456789abcdef}
+      TOKEN_SYMMETRIC_KEY: ${TOKEN_SYMMETRIC_KEY:-local-dev-secret-change-me-00000}
       ACCESS_TOKEN_DURATION: ${ACCESS_TOKEN_DURATION:-15m}
       REFRESH_TOKEN_DURATION: ${REFRESH_TOKEN_DURATION:-24h}
       REDIS_ADDRESS: redis:6379

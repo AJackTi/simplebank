@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+
+import "transfer.proto";
+
+option go_package = "github.com/AJackTi/simplebank/pb";
+
+message CreateTransferRequest {
+  int64 from_account_id = 1;
+  int64 to_account_id = 2;
+  int64 amount = 3;
+  string currency = 4;
+}
+
+message CreateTransferResponse {
+  TransferTxResult result = 1;
+}

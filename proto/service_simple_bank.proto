@@ -6,6 +6,11 @@ import "google/api/annotations.proto";
 import "rpc_create_user.proto";
 import "rpc_update_user.proto";
 import "rpc_login_user.proto";
+import "rpc_create_account.proto";
+import "rpc_get_account.proto";
+import "rpc_list_accounts.proto";
+import "rpc_create_transfer.proto";
+import "rpc_renew_access_token.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/AJackTi/simplebank/pb";
@@ -53,6 +58,59 @@ service SimpleBank {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description : "Use this API to login user and get access token & refresh token"
       summary: "Login user"
+    };
+  }
+
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {
+    option (google.api.http) = {
+      post: "/v1/accounts"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to create an account"
+      summary: "Create account"
+    };
+  }
+
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (google.api.http) = {
+      get: "/v1/accounts/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to get an account"
+      summary: "Get account"
+    };
+  }
+
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse) {
+    option (google.api.http) = {
+      get: "/v1/accounts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to list accounts"
+      summary: "List accounts"
+    };
+  }
+
+  rpc CreateTransfer(CreateTransferRequest) returns (CreateTransferResponse) {
+    option (google.api.http) = {
+      post: "/v1/transfers"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to create a transfer"
+      summary: "Create transfer"
+    };
+  }
+
+  rpc RenewAccessToken(RenewAccessTokenRequest) returns (RenewAccessTokenResponse) {
+    option (google.api.http) = {
+      post : "/v1/users/renew_access"
+      body : "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description : "Use this API to renew access token"
+      summary: "Renew access token"
     };
   }
 }

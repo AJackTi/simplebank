@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,21 @@ type Entry struct {
 	// can be negative or positive
 	Amount    int64     `json:"amount"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type OutboxTask struct {
+	ID           uuid.UUID    `json:"id"`
+	TaskType     string       `json:"task_type"`
+	Queue        string       `json:"queue"`
+	Payload      string       `json:"payload"`
+	MaxRetry     int32        `json:"max_retry"`
+	Attempts     int32        `json:"attempts"`
+	ProcessAt    time.Time    `json:"process_at"`
+	Status       string       `json:"status"`
+	LastError    string       `json:"last_error"`
+	DispatchedAt sql.NullTime `json:"dispatched_at"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 }
 
 type Session struct {

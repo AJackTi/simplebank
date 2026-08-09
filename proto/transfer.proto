@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package pb;
+
+import "account.proto";
+import "entry.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/AJackTi/simplebank/pb";
+
+message Transfer {
+  int64 id = 1;
+  int64 from_account_id = 2;
+  int64 to_account_id = 3;
+  int64 amount = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message TransferTxResult {
+  Transfer transfer = 1;
+  Account from_account = 2;
+  Account to_account = 3;
+  Entry from_entry = 4;
+  Entry to_entry = 5;
+}

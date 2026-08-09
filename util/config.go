@@ -26,7 +26,7 @@ type Config struct {
 
 var ErrInvalidConfig = errors.New("invalid configuration")
 
-const developmentTokenSymmetricKey = "0123456789abcdef0123456789abcdef"
+const developmentTokenSymmetricKey = "local-dev-secret-change-me-00000"
 
 // Validate checks the values required to start the application safely.
 func (config Config) Validate() error {
